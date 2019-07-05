@@ -31,6 +31,7 @@ executable = 'python3'
 
 # =====Program=====
 if_test = int(True)
+
 run_model = 'leakgan'
 CUDA = int(True)
 if_real_data = [int(False), int(True)]
@@ -53,7 +54,7 @@ MLE_train_epoch = 8
 ADV_train_epoch = 200
 inter_epoch = 10
 batch_size = 64
-max_seq_len = 20
+max_seq_len = 140
 gen_lr = 0.0015
 dis_lr = 5e-5
 pre_log_step = 1
