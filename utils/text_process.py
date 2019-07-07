@@ -122,10 +122,12 @@ def tensor_to_tokens(tensor, dictionary):
     tokens = []
     for sent in tensor:
         sent_token = []
-        for word in sent.tolist():
-            if word == cfg.padding_idx:
-                break
+        for i, word in enumerate(sent.tolist()):
+            if i != 0:
+                if word == cfg.padding_idx:
+                    break
             sent_token.append(dictionary[str(word)])
+            #print("Sent token: {}".format(sent_token))
         tokens.append(sent_token)
     return tokens
 

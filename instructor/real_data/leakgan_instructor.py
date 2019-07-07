@@ -104,13 +104,13 @@ class LeakGANInstructor(BasicInstructor):
         torch.nn.Module.dump_patches = True
         epoch_start_time = time.time() 
         # Set the random seed manually for reproducibility.
-        seed = 1111
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed(seed)
+        #seed = 1111
+        #torch.manual_seed(seed)
+        #if torch.cuda.is_available():
+         #   torch.cuda.manual_seed(seed)
         #I have to change this function
         #Step 1: load the latest model
-        with open("instructor/real_data/gen_ADV_00199.pt", 'rb') as f:
+        with open("instructor/real_data/gen_ADV_00198.pt", 'rb') as f:
             self.gen.load_state_dict(torch.load(f))
         print("Finish Loading")
         self.gen.eval()
@@ -129,27 +129,29 @@ class LeakGANInstructor(BasicInstructor):
         bit_string = ''.join(bin(ord(letter))[2:].zfill(8) for letter in secret_data)
         #print("Bit string: {}".format(bit_string))
          # secret_text = np.random.choice(range(args.bins), args.words)
-        bins = 4   #4 bins
-        secret_text = [int(i,2) for i in string2bins(bit_string, bins)] #convert to binary
+        bins_num = 4   #4 bins
+        secret_text = [int(i,2) for i in string2bins(bit_string, bins_num)] #convert to binary
         #print("Secret text: {}".format(secret_text))
         ###############################################################################
 
         def get_common_tokens(n):
-            dictionary = corpus
+            dictionary = self.word_index_dict
             d = sorted(dictionary.items(), key=lambda x: x[1], reverse=True)
             common_tokens = [item[0] for item in d]
             common_tokens = common_tokens[0:n]
             return common_tokens
 
-        if bins >= 2:
-            common_bin_indices = np.random.choice(range(bins), size=0, replace=False) 
+        if bins_num >= 2:
+            common_bin_indices = np.random.choice(range(bins_num), size=0, replace=False) 
 
             ntokens = len(corpus) 
             tokens = list(range(ntokens)) # * args.replication_factor
-
+            #print(ntokens)
             random.shuffle(tokens)
-            words_in_bin = int(len(tokens) / bins) 
-
+            words_in_bin = int(len(tokens) / bins_num) 
+            #There are left over words
+            leftover = int(len(tokens) % bins_num) 
+            #print(leftover)
             # common words
             num_tokens = 2
             common_tokens = get_common_tokens(num_tokens)
@@ -157,100 +159,163 @@ class LeakGANInstructor(BasicInstructor):
             #print(common_tokens)
             common_tokens = list(set(common_tokens) - set(remove_words))
             # common_tokens = [':',",",'.','"','to','a','the','in','of','and','is']
-            common_tokens_idx = [self.index_word_dict[word] for word in common_tokens]
+            common_tokens_idx = [self.word_index_dict[word] for word in common_tokens]
 
             bins = [tokens[i:i + words_in_bin] for i in range(0, len(tokens), words_in_bin)] # words to keep in each bin...
+            if (len(bins) > bins_num):
+                bins = bins[0:bins_num]
+                for i in range(0, leftover):
+                    bins[i].append(tokens[words_in_bin*bins_num + i])
+            print(len(bins))
+            print(len(bins[0]))
             bins = [list(set(bin_) | set(common_tokens_idx)) if bins.index(bin_) in common_bin_indices else bin_ for bin_ in bins]
-
+            print(len(bins))
+            print(len(bins[0]))
             zero = [list(set(tokens) - set(bin_)) for bin_ in bins]
-            print("Zero: {}".format(len(zero[0])))
+            #print("Zero: {}".format(len(zero[0])))
             print('Finished Initializing')
             print('time: {:5.2f}s'.format(time.time() - epoch_start_time))
             print('-' * 89)
             out_file = 'test1.txt'
-            with open(out_file, 'w') as outf:
-                w = 0 
-                i = 1
-                bin_sequence_length = len(secret_text[:]) # 85
-                print("bin sequence length", bin_sequence_length)
-                batch_size = cfg.batch_size
-                seq_len = cfg.max_seq_len
-                sentences = torch.zeros((batch_size, seq_len))
-
-                feature_array = torch.zeros((batch_size, seq_len + 1, self.gen.goal_out_size))
-                goal_array = torch.zeros((batch_size, seq_len + 1, self.gen.goal_out_size))
-                leak_out_array = torch.zeros((batch_size, seq_len + 1, cfg.vocab_size))
-
-                samples = torch.zeros(batch_size, seq_len + 1).long()
-                work_hidden = self.gen.init_hidden(batch_size)
-                mana_hidden = self.gen.init_hidden(batch_size)
-                leak_inp = torch.LongTensor([cfg.start_letter] * batch_size)
-                # dis_inp = torch.LongTensor([start_letter] * batch_size)
-                real_goal = self.gen.goal_init[:batch_size, :]
-
-                if torch.cuda.is_available():
-                    feature_array = feature_array.cuda()
-                    goal_array = goal_array.cuda()
-                    leak_out_array = leak_out_array.cuda()
-                goal_array[:, 0, :] = real_goal  # g0 = goal_init
-
-                if_sample = True
-                no_log = False
-                j = i
+            w = 0 
+            i = 1
+            bin_sequence_length = len(secret_text[:]) # 85
+            print("bin sequence length", bin_sequence_length)
+            batch_size = cfg.batch_size
+            seq_len = cfg.max_seq_len
+            sentences = torch.zeros((batch_size, seq_len))
+            feature_array = torch.zeros((batch_size, seq_len + 1, self.gen.goal_out_size))
+            goal_array = torch.zeros((batch_size, seq_len + 1, self.gen.goal_out_size))
+            leak_out_array = torch.zeros((batch_size, seq_len + 1, cfg.vocab_size))
+            samples = torch.zeros(batch_size, seq_len + 1).long()
+            work_hidden = self.gen.init_hidden(batch_size)
+            mana_hidden = self.gen.init_hidden(batch_size)
+            leak_inp = torch.LongTensor([cfg.start_letter] * batch_size)
+            # dis_inp = torch.LongTensor([start_letter] * batch_size)
+            real_goal = self.gen.goal_init[:batch_size, :]
+            if torch.cuda.is_available():
+                feature_array = feature_array.cuda()
+                goal_array = goal_array.cuda()
+                leak_out_array = leak_out_array.cuda()
+            goal_array[:, 0, :] = real_goal  # g0 = goal_init
+            if_sample = True
+            no_log = False
+            j = i
+            print("secret_text:{}".format(secret_text))
+            print("secret_text []:{}".format(secret_text[:]))
+            print("secret_text:{}".format(secret_text[:][1]))
+            print("zero:{}".format(zero[secret_text[:][1]]))
+            #samples = torch.zeros(batch_size * batch_size, self.gen.max_seq_len).long()  # larger than num_samples
+            index = cfg.start_letter
+            while i <= seq_len:
                 
-                #samples = torch.zeros(batch_size * batch_size, self.gen.max_seq_len).long()  # larger than num_samples
-                index = cfg.start_letter
-                while i <= bin_sequence_length:
-                    
-                    # print("bin: ", bin_)
-                    if if_sample:
-                        dis_inp = samples[:, :bin_sequence_length]
-                    else:  # to get feature and goal
-                        dis_inp = torch.zeros(batch_size, bin_sequence_length).long()
-                        if i > 1:
-                            dis_inp[:, :i - 1] = sentences[:, :i - 1]  # cut sentences
-                            leak_inp = sentences[:, i - 2]
-                    
-                    if torch.cuda.is_available():
-                        dis_inp = dis_inp.cuda()
-                        leak_inp = leak_inp.cuda()
-                    feature = self.dis.get_feature(dis_inp).unsqueeze(0)  
-                    print(feature)
-                    feature_array[:, i - 1, :] = feature.squeeze(0)
-                    out, cur_goal, work_hidden, mana_hidden = self.gen(index, leak_inp, work_hidden, mana_hidden, feature,
-                                                                real_goal, no_log=no_log, train=False)
-                    print("Out size: {}".format(out.size()))
-                    leak_out_array[:, i - 1, :] = out
-                    print("Secret tes:{}".format(secret_text[:]))
-                    zero_index = zero[secret_text[:][i-1]]
-                    print("Zero index:{}".format(len(zero_index)))
-                    zero_index = torch.LongTensor(zero_index) 
-                    print("Zero index after:{}".format(zero_index.size()))
-                    temperature = 1.5
-                    word_weights = out.squeeze().data.div(temperature).exp().cpu() 
-                    word_weights = word_weights.view(batch_size*self.gen.vocab_size)
-                    print("Word weights: {}".format(word_weights))
-                    print("Word weights size: {}".format(word_weights.size()))
-                    word_weights.index_fill_(0, zero_index, 0)
-                    print("Word weights: {}".format(word_weights))
-                    word_idx = torch.multinomial(word_weights, 1)[0]/batch_size
-                    print("Word idx: {}".format(int(word_idx.data)))
-                    word = corpus[str(int(word_idx.data))]
-                    index = int(word_idx.data)
-                    #assert out.shape == (batch_size, self.gen.max_seq_len)
-                    #samples[i * batch_size:(i + 1) * batch_size, :] = out
-                    ##print(samples)
-                    if word not in common_tokens:
-                        i += 1
-                    w += 1
-                    word = word.encode('ascii', 'ignore').decode('ascii')
-                    outf.write(word + ('\n' if i % 20 == 19 else ' '))
-                    log_interval = 5
-                    if i % log_interval == 0:
-                        print("total number of words", w)
-                        print("total length of secret", i)
-                        print('| Generated {}/{} words'.format(i, len(secret_text)))
-                        print('-' * 89)
+                # print("bin: ", bin_)
+                if if_sample:
+                    dis_inp = samples[:, :bin_sequence_length]
+                else:  # to get feature and goal
+                    dis_inp = torch.zeros(batch_size, bin_sequence_length).long()
+                    if i > 1:
+                        dis_inp[:, :i - 1] = sentences[:, :i - 1]  # cut sentences
+                        leak_inp = sentences[:, i - 2]
+                
+                if torch.cuda.is_available():
+                    dis_inp = dis_inp.cuda()
+                    leak_inp = leak_inp.cuda()
+                feature = self.dis.get_feature(dis_inp).unsqueeze(0)  
+                #print(feature)
+                feature_array[:, i - 1, :] = feature.squeeze(0)
+                out, cur_goal, work_hidden, mana_hidden = self.gen(index, leak_inp, work_hidden, mana_hidden, feature,
+                                                            real_goal, no_log=no_log, train=False)
+                #print("Out size: {}".format(out.size()))
+                leak_out_array[:, i - 1, :] = out
+                #print("New Method")
+                goal_array[:, i, :] = cur_goal.squeeze(1)
+                # =====My implement according to paper=====
+                # Update real_goal and save goal
+                # if 0 < i < 4:  # not update when i=0
+                #     real_goal = torch.sum(goal_array, dim=1)  # num_samples * goal_out_size
+                # elif i >= 4:
+                #     real_goal = torch.sum(goal_array[:, i - 4:i, :], dim=1)
+                # if i > 0:
+                #     goal_array[:, i, :] = cur_goal.squeeze(1)  # !!!note: save goal after update last_goal
+                # =====LeakGAN origin=====
+                # Save goal and update real_goal
+                if i > 0 and i % self.gen.step_size == 0:
+                    real_goal = torch.sum(goal_array[:, i - 3: i + 1, :], dim=1)
+                    if i / self.gen.step_size == 1:
+                        real_goal += self.gen.goal_init[:batch_size, :]
+                # Sample one token
+                if not no_log:
+                    out = torch.exp(out)
+                #print("Out before: {}".format(out))
+                #out = torch.multinomial(out, 1).view(-1)  # [batch_size] (sampling from each row)
+                #print("Out after: {}".format(out))
+                #print("Out one size: {}".format(out.size()))
+                #print("Out sample: {}".format(out[0]))
+                zero_index = zero[secret_text[:][i-1]] #indecies that has to be zeroed, as they are not in the current bin
+                zero_index = torch.LongTensor(zero_index)
+                if torch.cuda.is_available():
+                    zero_index = zero_index.cuda()
+                temperature = 1.5
+                word_weights = out
+                #print("Word weights: {}".format(word_weights[0]))
+                #print("Word weights size: {}".format(word_weights.size()))
+                #word_weights = word_weights.cpu()
+                word_weights.index_fill_(1, zero_index, 0) #make all the indecies zero if they are not in the bin
+                print("Word weights: {}".format(word_weights[0]))
+                print("Word weights size: {}".format(word_weights.size()))
+                word_weights = torch.multinomial(word_weights, 1).view(-1) #choose one word with highest probability for each sample
+                print("Out after: {}".format(word_weights))
+                out = torch.multinomial(out, 1).view(-1)
+                samples[:, i] = word_weights
+                leak_inp = out
+                word_idx = word_weights[0]
+                #print("Word idx: {}".format(int(word_idx)))
+                word = corpus[str(int(word_idx))]
+                #print("Word: {}".format(word))
+                #if word not in common_tokens:
+                i += 1
+                w += 1
+                word = word.encode('ascii', 'ignore').decode('ascii')
+                #outf.write(word + ('\n' if i % 20 == 19 else ' '))
+                """
+                print("Old Method")
+                print("Secret tes:{}".format(secret_text[:]))
+                zero_index = zero[secret_text[:][i-1]]
+                print("Zero index:{}".format(len(zero_index)))
+                zero_index = torch.LongTensor(zero_index) 
+                print("Zero index after:{}".format(zero_index.size()))
+                temperature = 1.5
+                word_weights = out.squeeze().data.div(temperature).exp().cpu() 
+                word_weights = word_weights.view(batch_size*self.gen.vocab_size)
+                print("Word weights: {}".format(word_weights))
+                print("Word weights size: {}".format(word_weights.size()))
+                word_weights.index_fill_(0, zero_index, 0)
+                print("Word weights: {}".format(word_weights))
+                word_idx = torch.multinomial(word_weights, 1)[0]/batch_size
+                print("Word idx: {}".format(int(word_idx.data)))
+                word = corpus[str(int(word_idx.data))]
+                index = int(word_idx.data)
+                #assert out.shape == (batch_size, self.gen.max_seq_len)
+                #samples[i * batch_size:(i + 1) * batch_size, :] = out
+                ##print(samples)
+                if word not in common_tokens:
+                    i += 1
+                w += 1
+                word = word.encode('ascii', 'ignore').decode('ascii')
+                outf.write(word + ('\n' if i % 20 == 19 else ' '))
+                log_interval = 5
+                if i % log_interval == 0:
+                    print("total number of words", w)
+                    print("total length of secret", i)
+                    print('| Generated {}/{} words'.format(i, len(secret_text)))
+                    print('-' * 89)
+                """
+            #samples = samples[:, :seq_len]
+            leak_out_array = leak_out_array[:, :seq_len, :]
+            tokens = []
+            write_tokens(out_file, tensor_to_tokens(samples, self.index_word_dict))
+            print("Samples: {}".format(samples))
 
     def pretrain_generator(self, epochs):
         """
