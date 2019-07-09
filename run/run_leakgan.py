@@ -33,7 +33,7 @@ executable = 'python3'
 if_test = int(False)
 run_model = 'leakgan'
 CUDA = int(True)
-if_real_data = [int(False), int(True)]
+if_real_data = [int(False), int(True), int(True)]
 data_shuffle = int(False)
 use_truncated_normal = int(True)
 oracle_pretrain = int(True)
@@ -41,10 +41,10 @@ gen_pretrain = int(False)
 dis_pretrain = int(False)
 
 # =====Oracle  or Real=====
-dataset = ['oracle', 'image_coco', 'twitter']
+dataset = ['oracle', 'image_coco', 'tweets']
 model_type = 'vanilla'
 loss_type = 'JS'
-vocab_size = [5000, 6613]
+vocab_size = [5000, 6613, 66846]
 temperature = 1
 
 # =====Basic Train=====

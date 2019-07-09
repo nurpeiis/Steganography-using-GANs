@@ -10,6 +10,7 @@
 import nltk
 import os
 import torch
+import codecs
 
 import config as cfg
 
@@ -17,9 +18,9 @@ import config as cfg
 def get_tokenlized(file):
     """tokenlize the file"""
     tokenlized = list()
-    with open(file) as raw:
+    with codecs.open(file,'r',encoding='utf8',errors='ignore') as raw:
         for text in raw:
-            text = nltk.word_tokenize(text.lower())
+            text = text.lower().split() + ['EOS']
             tokenlized.append(text)
     return tokenlized
 
@@ -88,6 +89,18 @@ def init_dict():
         dictout.write(str(word_index_dict))
     with open('dataset/image_coco_iw_dict.txt', 'w') as dictout:
         dictout.write(str(index_word_dict))
+
+    #twitter
+    tokens = get_tokenlized('dataset/tweets.txt')
+    tokens.extend(get_tokenlized('dataset/testdata/tweets_test.txt'))
+    word_set = get_word_list(tokens)
+    word_index_dict, index_word_dict = get_dict(word_set)
+
+    with codecs.open('dataset/tweets_wi_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
+        dictout.write(str(word_index_dict))
+    with codecs.open('dataset/tweets_iw_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
+        dictout.write(str(index_word_dict))
+
     """
     # emnlp
     tokens = get_tokenlized('dataset/emnlp_news.txt')
@@ -109,9 +122,9 @@ def load_dict(dataset):
     if not os.path.exists(iw_path) or not os.path.exists(iw_path):  # initialize dictionaries
         init_dict()
 
-    with open(iw_path, 'r') as dictin:
+    with codecs.open(iw_path, 'r', encoding='utf8',errors='ignore') as dictin:
         index_word_dict = eval(dictin.read().strip())
-    with open(wi_path, 'r') as dictin:
+    with codecs.open(wi_path, 'r', encoding='utf8',errors='ignore') as dictin:
         word_index_dict = eval(dictin.read().strip())
 
     return word_index_dict, index_word_dict
