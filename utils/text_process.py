@@ -139,7 +139,10 @@ def tensor_to_tokens(tensor, dictionary):
             if i != 0:
                 if word == cfg.padding_idx:
                     break
-            sent_token.append(dictionary[str(word)])
+            if (str(word) in dictionary.keys()):
+                sent_token.append(dictionary[str(word)])
+            else:
+                sent_token.append(dictionary[str(cfg.padding_idx)])
             #print("Sent token: {}".format(sent_token))
         tokens.append(sent_token)
     return tokens
@@ -157,6 +160,10 @@ def tokens_to_tensor(tokens, dictionary):
         while i < cfg.max_seq_len - 1:
             sent_ten.append(cfg.padding_idx)
             i += 1
+        #Strange bug that sometimes only 19 was given, whilst 20 should be the size
+        while (len(sent_ten[:cfg.max_seq_len]) < cfg.max_seq_len):
+            sent_ten.append(cfg.padding_idx)
+        #print("Sent_ten: {}".format(len(sent_ten[:cfg.max_seq_len])))
         tensor.append(sent_ten[:cfg.max_seq_len])
     return torch.LongTensor(tensor)
 

@@ -44,11 +44,11 @@ dis_pretrain = int(False)
 dataset = ['oracle', 'image_coco', 'tweets']
 model_type = 'vanilla'
 loss_type = 'JS'
-vocab_size = [5000, 6613, 66846]
+vocab_size = [5000, 6613, 70000]
 temperature = 1
 
 # =====Basic Train=====
-samples_num = 10000
+samples_num = 80001
 MLE_train_epoch = 8
 ADV_train_epoch = 200
 inter_epoch = 10

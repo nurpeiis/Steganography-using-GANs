@@ -49,7 +49,7 @@ vocab_size = [5000, 6613]
 temperature = 1
 
 # =====Basic Train=====
-samples_num = 10000
+samples_num = 80001
 MLE_train_epoch = 8
 ADV_train_epoch = 200
 inter_epoch = 10
