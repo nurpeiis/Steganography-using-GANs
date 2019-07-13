@@ -8,9 +8,11 @@
 # Copyrights (C) 2018. All Rights Reserved.
 
 import nltk
+from nltk.tokenize import TweetTokenizer
 import os
 import torch
 import codecs
+import random # for unk words
 
 import config as cfg
 
@@ -18,9 +20,10 @@ import config as cfg
 def get_tokenlized(file):
     """tokenlize the file"""
     tokenlized = list()
+    tknzr = TweetTokenizer(reduce_len=True)
     with codecs.open(file,'r',encoding='utf8',errors='ignore') as raw:
         for text in raw:
-            text = text.lower().split() + ['EOS']
+            text = tknzr.tokenize((text.lower()))
             tokenlized.append(text)
     return tokenlized
 
@@ -28,9 +31,28 @@ def get_tokenlized(file):
 def get_word_list(tokens):
     """get word set"""
     word_set = list()
+    dictc = dict()
     for sentence in tokens:
         for word in sentence:
-            word_set.append(word)
+            if word in dictc:
+                dictc[word] += 1
+            else:
+                dictc[word] = 1
+    for key, value in sorted(dictc.items(), key=lambda item: item[1], reverse=True):
+        if value > 2:
+            word_set.append(key)
+    #sort and get only most popular 15000 words
+    """
+    word_counter = {}
+    for word in word_set:
+        if word in word_counter:
+            word_counter[word] += 1
+        else:
+            word_counter[word] = 1
+    popular_words = sorted(word_counter, key = word_counter.get, reverse=True)
+    print(popular_words[0])
+    word_set = popular_words[:cfg.vocab_size]
+    """
     return list(set(word_set))
 
 
@@ -101,18 +123,48 @@ def init_dict():
     with codecs.open('dataset/tweets_iw_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
         dictout.write(str(index_word_dict))
 
-    """
+    #twitter-15000
+    tokens = get_tokenlized('dataset/tweets_15000.txt')
+    tokens.extend(get_tokenlized('dataset/testdata/tweets_test.txt'))
+    word_set = get_word_list(tokens)
+    word_index_dict, index_word_dict = get_dict(word_set)
+
+    with codecs.open('dataset/tweets_15000_wi_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
+        dictout.write(str(word_index_dict))
+    with codecs.open('dataset/tweets_15000_iw_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
+        dictout.write(str(index_word_dict))
+    #twitter-20000
+    tokens = get_tokenlized('dataset/tweets_20000.txt')
+    tokens.extend(get_tokenlized('dataset/testdata/tweets_test.txt'))
+    word_set = get_word_list(tokens)
+    word_index_dict, index_word_dict = get_dict(word_set)
+
+    with codecs.open('dataset/tweets_20000_wi_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
+        dictout.write(str(word_index_dict))
+    with codecs.open('dataset/tweets_20000_iw_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
+        dictout.write(str(index_word_dict))
+    #twitter-25000
+    tokens = get_tokenlized('dataset/tweets_25000.txt')
+    tokens.extend(get_tokenlized('dataset/testdata/tweets_test.txt'))
+    word_set = get_word_list(tokens)
+    word_index_dict, index_word_dict = get_dict(word_set)
+
+    with codecs.open('dataset/tweets_25000_wi_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
+        dictout.write(str(word_index_dict))
+    with codecs.open('dataset/tweets_25000_iw_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
+        dictout.write(str(index_word_dict))
+    
     # emnlp
     tokens = get_tokenlized('dataset/emnlp_news.txt')
     tokens.extend(get_tokenlized('dataset/testdata/emnlp_news_test.txt'))
     word_set = get_word_list(tokens)
     word_index_dict, index_word_dict = get_dict(word_set)
 
-    with open('dataset/emnlp_news_wi_dict.txt', 'w') as dictout:
+    with codecs.open('dataset/emnlp_news_wi_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
         dictout.write(str(word_index_dict))
-    with open('dataset/emnlp_news_iw_dict.txt', 'w') as dictout:
+    with codecs.open('dataset/emnlp_news_iw_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
         dictout.write(str(index_word_dict))
-    """
+    
 
 def load_dict(dataset):
     """Load dictionary from local files"""
@@ -156,7 +208,10 @@ def tokens_to_tensor(tokens, dictionary):
         for i, word in enumerate(sent):
             if word == cfg.padding_token:
                 break
-            sent_ten.append(int(dictionary[str(word)]))
+            if word in dictionary:
+                sent_ten.append(int(dictionary[str(word)]))
+            else: 
+                sent_ten.append(int(dictionary[str(random.choice(list(dictionary.keys())))]))
         while i < cfg.max_seq_len - 1:
             sent_ten.append(cfg.padding_idx)
             i += 1
@@ -186,7 +241,7 @@ def padding_token(tokens):
 
 def write_tokens(filename, tokens):
     """Write word tokens to a local file (For Real data)"""
-    with open(filename, 'w') as fout:
+    with codecs.open(filename, 'w', encoding='utf8',errors='ignore') as fout:
         for sent in tokens:
             fout.write(' '.join(sent))
             fout.write('\n')
@@ -194,7 +249,7 @@ def write_tokens(filename, tokens):
 
 def write_tensor(filename, tensor):
     """Write Tensor to a local file (For Oracle data)"""
-    with open(filename, 'w') as fout:
+    with codecs.open(filename, 'w', encoding='utf8',errors='ignore') as fout:
         for sent in tensor:
             fout.write(' '.join([str(i) for i in sent.tolist()]))
             fout.write('\n')

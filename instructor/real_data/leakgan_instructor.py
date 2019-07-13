@@ -110,7 +110,7 @@ class LeakGANInstructor(BasicInstructor):
          #   torch.cuda.manual_seed(seed)
         #I have to change this function
         #Step 1: load the latest model
-        with open("instructor/real_data/gen_ADV_00198.pt", 'rb') as f:
+        with open("instructor/real_data/gen_ADV_00037.pt", 'rb') as f:
             self.gen.load_state_dict(torch.load(f))
         print("Finish Loading")
         self.gen.eval()

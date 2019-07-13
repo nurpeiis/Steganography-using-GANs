@@ -18,7 +18,10 @@ class GANDataset(Dataset):
         self.data = data
 
     def __getitem__(self, index):
-        return self.data[index]
+        if (index in self.data):
+            return self.data[index]
+        else: 
+            return self.data[0]
 
     def __len__(self):
         return len(self.data)

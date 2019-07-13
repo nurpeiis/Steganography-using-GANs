@@ -34,7 +34,7 @@ if_test = int(True)
 
 run_model = 'leakgan'
 CUDA = int(True)
-if_real_data = [int(False), int(True)]
+if_real_data = [int(False), int(True), int(True), int(True), int(True), int(True), int(True)]
 data_shuffle = int(False)
 use_truncated_normal = int(True)
 oracle_pretrain = int(True)
@@ -42,14 +42,14 @@ gen_pretrain = int(False)
 dis_pretrain = int(False)
 
 # =====Oracle  or Real=====
-dataset = ['oracle', 'image_coco', 'twitter']
+dataset = ['oracle', 'image_coco', 'tweets', 'emnlp_news', 'tweets_15000', 'tweets_20000', 'tweets_25000']
 model_type = 'vanilla'
 loss_type = 'JS'
-vocab_size = [5000, 6613]
+vocab_size = [5000, 6613, 15000, 5255, 29941, 33386, 36666]
 temperature = 1
 
 # =====Basic Train=====
-samples_num = 80001
+samples_num = 15000
 MLE_train_epoch = 8
 ADV_train_epoch = 200
 inter_epoch = 10
