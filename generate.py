@@ -45,7 +45,7 @@ dis_pretrain = int(False)
 dataset = ['oracle', 'image_coco', 'tweets', 'emnlp_news', 'tweets_15000', 'tweets_20000', 'tweets_25000']
 model_type = 'vanilla'
 loss_type = 'JS'
-vocab_size = [5000, 6613, 15000, 5255, 29941, 33386, 36666]
+vocab_size = [5000, 6613, 15000, 5255, 7753, 33386, 36666]
 temperature = 1
 
 # =====Basic Train=====
@@ -54,7 +54,7 @@ MLE_train_epoch = 8
 ADV_train_epoch = 200
 inter_epoch = 10
 batch_size = 64
-max_seq_len = 140
+max_seq_len = 30
 gen_lr = 0.0015
 dis_lr = 5e-5
 pre_log_step = 1

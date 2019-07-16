@@ -20,11 +20,17 @@ import config as cfg
 def get_tokenlized(file):
     """tokenlize the file"""
     tokenlized = list()
-    tknzr = TweetTokenizer(reduce_len=True)
-    with codecs.open(file,'r',encoding='utf8',errors='ignore') as raw:
-        for text in raw:
-            text = tknzr.tokenize((text.lower()))
-            tokenlized.append(text)
+    if cfg.dataset != 'emnlp_news':
+        tknzr = TweetTokenizer(reduce_len=True)
+        with codecs.open(file,'r',encoding='utf8',errors='ignore') as raw:
+            for text in raw:
+                text = tknzr.tokenize((text.lower()))
+                tokenlized.append(text)
+    else:
+        with codecs.open(file,'r' ,encoding='utf8',errors='ignore') as raw:
+            for text in raw:
+                text = nltk.word_tokenize(text.lower())
+                tokenlized.append(text)
     return tokenlized
 
 
@@ -189,12 +195,12 @@ def tensor_to_tokens(tensor, dictionary):
         sent_token = []
         for i, word in enumerate(sent.tolist()):
             if i != 0:
-                if word == cfg.padding_idx:
-                    break
-            if (str(word) in dictionary.keys()):
-                sent_token.append(dictionary[str(word)])
-            else:
-                sent_token.append(dictionary[str(cfg.padding_idx)])
+                #if word == cfg.padding_idx:
+                    #break
+                if (str(word) in dictionary.keys()):
+                    sent_token.append(dictionary[str(word)])
+                #else:
+                    #sent_token.append(dictionary[str(cfg.padding_idx)])
             #print("Sent token: {}".format(sent_token))
         tokens.append(sent_token)
     return tokens

@@ -48,6 +48,7 @@ class BasicInstructor:
             self.gen.load_state_dict(torch.load(cfg.pretrained_gen_path))
 
         if cfg.CUDA:
+            print("Hello - CUDA")
             self.gen = self.gen.cuda()
             self.dis = self.dis.cuda()
 

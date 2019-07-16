@@ -71,4 +71,4 @@ def text_precess(train_text_loc, test_text_loc=None):
     with codecs.open(train_text_loc + '_iw_dict.txt', 'w', encoding='utf8',errors='ignore') as dictout:
         dictout.write(str(index_word_dict))
 
-text_precess("../tweets_25000.txt", "tweets_test.txt")
+text_precess("../emnlp_news.txt", "emnlp_news_test.txt")

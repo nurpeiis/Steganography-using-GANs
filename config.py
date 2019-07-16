@@ -21,7 +21,7 @@ oracle_pretrain = True  # True
 gen_pretrain = False
 dis_pretrain = False
 
-run_model = 'relgan'  # seqgan, leakgan, relgan
+run_model = 'leakgan'  # seqgan, leakgan, relgan
 use_truncated_normal = True
 
 # =====Oracle or Real, type=====
