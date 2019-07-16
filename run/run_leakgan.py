@@ -36,7 +36,7 @@ CUDA = int(True)
 if_real_data = [int(False), int(True), int(True), int(True), int(True), int(True), int(True)]
 data_shuffle = int(False)
 use_truncated_normal = int(True)
-oracle_pretrain = int(True)
+oracle_pretrain = int(False)
 gen_pretrain = int(False)
 dis_pretrain = int(False)
 
@@ -48,7 +48,7 @@ vocab_size = [5000, 6613, 15000, 5255, 7753, 9500, 9500]
 temperature = 1
 
 # =====Basic Train=====
-samples_num = 100000
+samples_num = 20000
 MLE_train_epoch = 8
 ADV_train_epoch = 200
 inter_epoch = 10

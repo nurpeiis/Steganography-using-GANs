@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # =====Dict=====
     if cfg.if_real_data:
         from instructor.real_data.leakgan_instructor import LeakGANInstructor
-
+        print("I'm importing LeakGANInstructor")
     else:
         from instructor.oracle_data.leakgan_instructor import LeakGANInstructor
     instruction_dict = {

@@ -35,9 +35,9 @@ class LeakGANInstructor(BasicInstructor):
                              cfg.padding_idx, cfg.goal_size, cfg.step_size, cfg.CUDA)
         self.dis = LeakGAN_D(cfg.dis_embed_dim, cfg.vocab_size, cfg.padding_idx, gpu=cfg.CUDA)
         if (cfg.CUDA):
-            self.gen.cuda()
-            self.dis.cuda()
-        self.init_model()
+            self.gen = self.gen.cuda()
+            self.dis = self.dis.cuda()
+        #rself.init_model()
         
         # optimizer
         mana_params, work_params = self.gen.split_params()
@@ -46,19 +46,21 @@ class LeakGANInstructor(BasicInstructor):
 
         self.gen_opt = [mana_opt, work_opt]
         self.dis_opt = optim.Adam(self.dis.parameters(), lr=cfg.dis_lr)
-
+        print("Finished optimizer")
         # Criterion
         self.mle_criterion = nn.NLLLoss()
         self.dis_criterion = nn.CrossEntropyLoss()
-
+        print("Finished Criterion")
         # DataLoader
         self.gen_data = GenDataIter(self.gen.sample(cfg.batch_size, cfg.batch_size, self.dis))
+        print("Finished GEN DATALOADER ")
         self.dis_data = DisDataIter(self.gen_data.random_batch()['target'], self.oracle_data.random_batch()['target'])
-
+        print("Finished DATALOADER ")
         # Metrics
         self.bleu3 = BLEU(test_text=tensor_to_tokens(self.gen_data.target, self.index_word_dict),
                           real_text=tensor_to_tokens(self.test_data.target, self.index_word_dict),
                           gram=3)
+        print("Finished Metrics")
 
     def _run(self):
         for inter_num in range(cfg.inter_epoch):
@@ -366,6 +368,8 @@ class LeakGANInstructor(BasicInstructor):
             # prepare loader for training
             pos_samples = self.oracle_data.target
             neg_samples = self.gen.sample(cfg.samples_num, cfg.batch_size, self.dis)
+            #print("Pos samples: {}".format(pos_samples))
+            #print("Neg samples: {}".format(neg_samples))
             self.dis_data.reset(pos_samples, neg_samples)
 
             for epoch in range(d_epoch):

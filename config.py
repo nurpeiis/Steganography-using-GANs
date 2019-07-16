@@ -26,7 +26,7 @@ use_truncated_normal = True
 
 # =====Oracle or Real, type=====
 if_real_data = False  # if use real data
-dataset = 'oracle'  # oracle, image_coco, emnlp_news
+dataset = 'emnlp_news'  # oracle, image_coco, emnlp_news
 model_type = 'vanilla'  # vanilla, noRMC, noGumbel (custom)
 loss_type = 'RSGAN'  # standard, JS, KL, hinge, tv, LS, RSGAN (for RelGAN)
 vocab_size = 5000  # oracle: 5000, coco: 6613, emnlp: 5255
@@ -90,6 +90,7 @@ if os.path.exists(log_filename + '.txt'):
 log_filename = log_filename + '.txt'
 
 # Automatically choose GPU or CPU
+"""
 if torch.cuda.is_available():
     os.system('nvidia-smi -q -d Utilization | grep Gpu > gpu')
     util_gpu = [int(line.strip().split()[2]) for line in open('gpu', 'r')]
@@ -98,10 +99,10 @@ if torch.cuda.is_available():
     device = util_gpu.index(min(util_gpu))
 else:
     device = -1
-# device=1
-# print('device: ', device)
-torch.cuda.set_device(device)
 
+torch.cuda.set_device(device)
+"""
+device = 0
 # =====Save Model and samples=====
 save_root = 'save/{}_{}_{}_{}_glr{}_temp{}_T{}/'.format(run_model, model_type, dataset, loss_type, gen_lr,
                                                         temperature, strftime("%m%d-%H%M", localtime()))
