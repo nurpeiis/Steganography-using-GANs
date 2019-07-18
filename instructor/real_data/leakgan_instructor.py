@@ -11,11 +11,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-import numpy as np
-import random
-import time 
-import math 
-
 import config as cfg
 from instructor.real_data.instructor import BasicInstructor
 from metrics.bleu import BLEU
@@ -35,10 +30,10 @@ class LeakGANInstructor(BasicInstructor):
                              cfg.padding_idx, cfg.goal_size, cfg.step_size, cfg.CUDA)
         self.dis = LeakGAN_D(cfg.dis_embed_dim, cfg.vocab_size, cfg.padding_idx, gpu=cfg.CUDA)
         if (cfg.CUDA):
-            self.gen = self.gen.cuda()
-            self.dis = self.dis.cuda()
-        #rself.init_model()
-        
+            self.dis.cuda()
+            self.gen.cuda()
+        self.init_model()
+
         # optimizer
         mana_params, work_params = self.gen.split_params()
         mana_opt = optim.Adam(mana_params, lr=cfg.gen_lr)
@@ -46,21 +41,19 @@ class LeakGANInstructor(BasicInstructor):
 
         self.gen_opt = [mana_opt, work_opt]
         self.dis_opt = optim.Adam(self.dis.parameters(), lr=cfg.dis_lr)
-        print("Finished optimizer")
+
         # Criterion
         self.mle_criterion = nn.NLLLoss()
         self.dis_criterion = nn.CrossEntropyLoss()
-        print("Finished Criterion")
+
         # DataLoader
         self.gen_data = GenDataIter(self.gen.sample(cfg.batch_size, cfg.batch_size, self.dis))
-        print("Finished GEN DATALOADER ")
         self.dis_data = DisDataIter(self.gen_data.random_batch()['target'], self.oracle_data.random_batch()['target'])
-        print("Finished DATALOADER ")
+
         # Metrics
         self.bleu3 = BLEU(test_text=tensor_to_tokens(self.gen_data.target, self.index_word_dict),
                           real_text=tensor_to_tokens(self.test_data.target, self.index_word_dict),
                           gram=3)
-        print("Finished Metrics")
 
     def _run(self):
         for inter_num in range(cfg.inter_epoch):
@@ -109,11 +102,8 @@ class LeakGANInstructor(BasicInstructor):
         torch.nn.Module.dump_patches = True
         epoch_start_time = time.time() 
         # Set the random seed manually for reproducibility.
-        #seed = 1111
-        #torch.manual_seed(seed)
-        #if torch.cuda.is_available():
-         #   torch.cuda.manual_seed(seed)
-        #I have to change this function
+        seed = 1111
+        torch.manual_seed(seed)
         #Step 1: load the latest model
         with open("instructor/real_data/gen_ADV_00125.pt", 'rb') as f:
             self.gen.load_state_dict(torch.load(f))
@@ -121,23 +111,21 @@ class LeakGANInstructor(BasicInstructor):
         self.gen.eval()
         corpus = self.index_word_dict
         #print("Corpus: {}".format(corpus))
-        ###############################################################################
-        # Secret Text Modification
 
         def string2bins(bit_string, n_bins):
             n_bits = int(math.log(n_bins, 2))
             return [bit_string[i:i+n_bits] for i in range(0, len(bit_string), n_bits)]
+        #Step 1: Get secret data 
         secret_file =  "instructor/real_data/secret_file.txt"
         secret_file = open(secret_file, 'r')
         secret_data = secret_file.read()
         #print("Secret Data: {}".format(secret_data))
+        #Step 2: Compress string into binary string
         bit_string = ''.join(bin(ord(letter))[2:].zfill(8) for letter in secret_data)
-        #print("Bit string: {}".format(bit_string))
-         # secret_text = np.random.choice(range(args.bins), args.words)
-        bins_num = 8   #4 bins
-        secret_text = [int(i,2) for i in string2bins(bit_string, bins_num)] #convert to binary
-        #print("Secret text: {}".format(secret_text))
-        ###############################################################################
+        #In the first step we will use 8 bins to convert so that we can convert 64 bits into 8 word 
+        bins_num = 8   
+        secret_text = [int(i,2) for i in string2bins(bit_string, bins_num)] #convert to bins 
+        
 
         def get_common_tokens(n):
             dictionary = self.word_index_dict
@@ -368,8 +356,6 @@ class LeakGANInstructor(BasicInstructor):
             # prepare loader for training
             pos_samples = self.oracle_data.target
             neg_samples = self.gen.sample(cfg.samples_num, cfg.batch_size, self.dis)
-            #print("Pos samples: {}".format(pos_samples))
-            #print("Neg samples: {}".format(neg_samples))
             self.dis_data.reset(pos_samples, neg_samples)
 
             for epoch in range(d_epoch):

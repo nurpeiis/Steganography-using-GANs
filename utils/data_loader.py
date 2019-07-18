@@ -18,10 +18,7 @@ class GANDataset(Dataset):
         self.data = data
 
     def __getitem__(self, index):
-        if (index in self.data):
-            return self.data[index]
-        else: 
-            return self.data[0]
+        return self.data[index]
 
     def __len__(self):
         return len(self.data)
@@ -41,7 +38,7 @@ class GenDataIter:
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             drop_last=True)
-        print("Gen Train")
+
         self.input = self._all_data_('input')
         self.target = self._all_data_('target')
 
@@ -106,7 +103,6 @@ class DisDataIter:
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             drop_last=True)
-        print("DIs")
 
     def __read_data__(self, pos_samples, neg_samples):
         """

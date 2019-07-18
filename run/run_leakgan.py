@@ -27,30 +27,30 @@ else:
     print('Missing argument: job_id and gpu_id. Use default job_id: {}, gpu_id: {}'.format(job_id, gpu_id))
 
 # Executables
-executable = 'python3'
+executable = 'python'
 
 # =====Program=====
 if_test = int(False)
 run_model = 'leakgan'
 CUDA = int(True)
-if_real_data = [int(False), int(True), int(True), int(True), int(True), int(True), int(True)]
+if_real_data = [int(False), int(True), int(True)]
 data_shuffle = int(False)
 use_truncated_normal = int(True)
-oracle_pretrain = int(False)
+oracle_pretrain = int(True)
 gen_pretrain = int(False)
 dis_pretrain = int(False)
 
 # =====Oracle  or Real=====
-dataset = ['oracle', 'image_coco', 'tweets', 'emnlp_news', 'tweets_15000', 'tweets_20000', 'tweets_25000']
+dataset = ['oracle', 'image_coco', 'emnlp_news']
 model_type = 'vanilla'
 loss_type = 'JS'
-vocab_size = [5000, 6613, 15000, 5255, 7753, 9500, 9500]
+vocab_size = [5000, 6613, 5255]
 temperature = 1
 
 # =====Basic Train=====
-samples_num = 20000
+samples_num = 50000
 MLE_train_epoch = 8
-ADV_train_epoch = 200
+ADV_train_epoch = 300
 inter_epoch = 10
 batch_size = 64
 max_seq_len = 32

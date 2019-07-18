@@ -22,7 +22,7 @@ goal_out_size = sum(dis_num_filters)
 
 class LeakGAN_G(nn.Module):
     def __init__(self, embedding_dim, hidden_dim, vocab_size, max_seq_len, padding_idx, goal_size,
-                 step_size, gpu=True):
+                 step_size, gpu=False):
         super(LeakGAN_G, self).__init__()
         self.name = 'leakgan'
 
