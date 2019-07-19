@@ -124,8 +124,9 @@ def tensor_to_tokens(tensor, dictionary):
     for sent in tensor:
         sent_token = []
         for word in sent.tolist():
-            if word == cfg.padding_idx:
-                break
+            if not cfg.if_test:
+                if word == cfg.padding_idx:
+                    break
             if (str(word) in dictionary.keys()):
                 sent_token.append(dictionary[str(word)])
             else:

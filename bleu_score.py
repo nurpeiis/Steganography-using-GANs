@@ -12,12 +12,12 @@ parser.add_argument('--gram', type=int, default= 5,
 args = parser.parse_args()
 #Step 1: Read data from files and put them into list
 test_sentences = ''
-with open(args.test_data, 'r') as f:
+with codecs.open(args.test_data, 'r',encoding='utf8',errors='ignore') as f:
     for line in f:
-        line = line.rstrip('\n')
+        #line = line.rstrip('\n')
         test_sentences += line
-test_sentences = test_sentences.split(' <eos> ')
-
+test_sentences = test_sentences.split(' EOS ')
+print(test_sentences[0])
 real_sentences = list()
 with codecs.open(args.real_data,'r',encoding='utf8',errors='ignore') as f:
     for line in f:

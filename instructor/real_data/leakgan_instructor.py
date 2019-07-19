@@ -11,6 +11,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+import time
+import math
+import random
+import numpy as np
+
 import config as cfg
 from instructor.real_data.instructor import BasicInstructor
 from metrics.bleu import BLEU
@@ -105,7 +110,7 @@ class LeakGANInstructor(BasicInstructor):
         seed = 1111
         torch.manual_seed(seed)
         #Step 1: load the latest model
-        with open("instructor/real_data/gen_ADV_00125.pt", 'rb') as f:
+        with open("instructor/real_data/gen_ADV_00028.pt", 'rb') as f:
             self.gen.load_state_dict(torch.load(f))
         print("Finish Loading")
         self.gen.eval()
@@ -122,11 +127,11 @@ class LeakGANInstructor(BasicInstructor):
         #print("Secret Data: {}".format(secret_data))
         #Step 2: Compress string into binary string
         bit_string = ''.join(bin(ord(letter))[2:].zfill(8) for letter in secret_data)
+        #print(bit_string)
+        #bit_string = '1110111001010001110000111101111011111101110001100110101101100111'
         #In the first step we will use 8 bins to convert so that we can convert 64 bits into 8 word 
-        bins_num = 8   
+        bins_num = 4   
         secret_text = [int(i,2) for i in string2bins(bit_string, bins_num)] #convert to bins 
-        
-
         def get_common_tokens(n):
             dictionary = self.word_index_dict
             d = sorted(dictionary.items(), key=lambda x: x[1], reverse=True)
@@ -148,9 +153,9 @@ class LeakGANInstructor(BasicInstructor):
             # common words
             num_tokens = 1
             common_tokens = get_common_tokens(num_tokens)
-            remove_words = ['<user>','rt']
+            #remove_words = ['<user>','rt']
             #print(common_tokens)
-            common_tokens = list(set(common_tokens) - set(remove_words))
+            #common_tokens = list(set(common_tokens) - set(remove_words))
             common_tokens.append('EOS')
             # common_tokens = [':',",",'.','"','to','a','the','in','of','and','is']
             common_tokens_idx = [self.word_index_dict[word] for word in common_tokens]
@@ -158,23 +163,23 @@ class LeakGANInstructor(BasicInstructor):
             bins = list()
             tokens_temp = tokens
             for i in range(0, bins_num):
-                bins.append(random.sample(tokens, words_in_bin))
-                tokens = list(set(tokens) - set(bins[i]))
-                print("Tokens size: {}".format(len(tokens)))
+                bins = [tokens[i:i + words_in_bin] for i in range(0, len(tokens), words_in_bin)]
+                #tokens = list(set(tokens) - set(bins[i]))
+                #print("Tokens size: {}".format(len(tokens)))
             for i in range(0, leftover):
                 bins[i].append(tokens[i])
-            print(len(bins))
-            print(len(bins[0]))
+            #print(len(bins))
+            #print(len(bins[0]))
             bins = [list(set(bin_) | set(common_tokens_idx)) if bins.index(bin_) in common_bin_indices else bin_ for bin_ in bins]
-            print("Bins:{}".format(bins))
-            print(len(bins))
-            print(len(bins[0]))
+            #print("Bins:{}".format(bins))
+            #print(len(bins))
+            #print(len(bins[0]))
             zero = [list(set(tokens_temp) - set(bin_)) for bin_ in bins]
             #print("Zero: {}".format(zero[1]))
             print('Finished Initializing')
             print('time: {:5.2f}s'.format(time.time() - epoch_start_time))
             print('-' * 89)
-            out_file = 'test1.txt'
+            out_file = 'test5.txt'
             w = 0 
             i = 1
             bin_sequence_length = len(secret_text[:]) # 85
@@ -213,8 +218,8 @@ class LeakGANInstructor(BasicInstructor):
                 else:  # to get feature and goal
                     dis_inp = torch.zeros(batch_size, bin_sequence_length).long()
                     if i > 1:
-                        dis_inp[:, :i - 1] = sentences[:, :i - 1]  # cut sentences
-                        leak_inp = sentences[:, i - 2]
+                        dis_inp[:, :i - 1] = samples[:, :i - 1]  # cut sentences
+                        leak_inp = samples[:, i - 2]
                 
                 if torch.cuda.is_available():
                     dis_inp = dis_inp.cuda()
@@ -260,14 +265,13 @@ class LeakGANInstructor(BasicInstructor):
                 #print("Word weights: {}".format(word_weights[0]))
                 #print("Word weights size: {}".format(word_weights.size()))
                 #word_weights = word_weights.cpu()
-                word_weights.index_fill_(1, zero_index, 0) #make all the indecies zero if they are not in the bin
+                word_weights = word_weights.index_fill_(1, zero_index, 0) #make all the indecies zero if they are not in the bin
                 #print("Word weights: {}".format(word_weights[0]))
                 #print("Word weights size: {}".format(word_weights.size()))
                 word_weights = torch.multinomial(word_weights, 1).view(-1) #choose one word with highest probability for each sample
                 #print("Out after: {}".format(word_weights))
-                out = torch.multinomial(out, 1).view(-1)
                 samples[:, i] = word_weights
-                leak_inp = out
+                leak_inp = word_weights
                 word_idx = word_weights[0]
                 #print("Word idx: {}".format(int(word_idx)))
                 word = corpus[str(int(word_idx))]

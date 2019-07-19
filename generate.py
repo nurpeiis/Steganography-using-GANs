@@ -42,19 +42,19 @@ gen_pretrain = int(False)
 dis_pretrain = int(False)
 
 # =====Oracle  or Real=====
-dataset = ['oracle', 'image_coco', 'tweets', 'emnlp_news', 'tweets_15000', 'tweets_20000', 'tweets_25000']
+dataset = ['oracle', 'image_coco', 'emnlp_news']
 model_type = 'vanilla'
 loss_type = 'JS'
-vocab_size = [5000, 6613, 15000, 5255, 7753, 33386, 36666]
+vocab_size = [5000, 6613, 5255]
 temperature = 1
 
 # =====Basic Train=====
-samples_num = 15000
+samples_num = 50000
 MLE_train_epoch = 8
-ADV_train_epoch = 200
+ADV_train_epoch = 300
 inter_epoch = 10
 batch_size = 64
-max_seq_len = 30
+max_seq_len = 32
 gen_lr = 0.0015
 dis_lr = 5e-5
 pre_log_step = 1
@@ -63,8 +63,8 @@ adv_log_step = 1
 # =====Generator=====
 ADV_g_step = 1
 rollout_num = 4
-gen_embed_dim = 32
-gen_hidden_dim = 32
+gen_embed_dim = 128
+gen_hidden_dim = 128
 goal_size = 16
 step_size = 4
 
@@ -73,8 +73,9 @@ d_step = 5
 d_epoch = 3
 ADV_d_step = 5
 ADV_d_epoch = 3
-dis_embed_dim = 64
-dis_hidden_dim = 64
+dis_embed_dim = 256
+dis_hidden_dim = 256
+
 
 # =====Run=====
 rootdir = './'
