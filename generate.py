@@ -31,7 +31,7 @@ executable = 'python3'
 
 # =====Program=====
 if_test = int(True)
-
+if_2layers = int(True)
 run_model = 'leakgan'
 CUDA = int(True)
 if_real_data = [int(False), int(True), int(True), int(True), int(True), int(True), int(True)]
@@ -85,6 +85,7 @@ cwd = os.path.dirname(os.path.abspath(__file__))
 args = [
     # Program
     '--if_test', if_test,
+    '--if_2layers', if_2layers,
     '--run_model', run_model,
     '--dataset', dataset[job_id],
     '--if_real_data', if_real_data[job_id],

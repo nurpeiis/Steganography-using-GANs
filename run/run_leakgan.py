@@ -8,7 +8,7 @@
 # Copyrights (C) 2018. All Rights Reserved.
 
 import sys
-import time
+
 from subprocess import call
 
 import os

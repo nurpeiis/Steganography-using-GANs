@@ -8,6 +8,7 @@ import config as cfg
 def program_config(parser):
     # Program
     parser.add_argument('--if_test', default=cfg.if_test, type=int)
+    parser.add_argument('--if_2layers', default=cfg.if_2layers, type=int)
     parser.add_argument('--run_model', default=cfg.run_model, type=str)
     parser.add_argument('--dataset', default=cfg.dataset, type=str)
     parser.add_argument('--model_type', default=cfg.model_type, type=str)
@@ -93,4 +94,7 @@ if __name__ == '__main__':
     if not cfg.if_test:
         inst._run()
     else:
-        inst._test()
+        if cfg.if_2layers:
+            inst._test_2_layers()
+        else:
+            inst._test()
