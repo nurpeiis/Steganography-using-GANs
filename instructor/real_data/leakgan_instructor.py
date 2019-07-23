@@ -7,6 +7,8 @@ import time
 import math
 import random
 import numpy as np
+import pickle
+import os
 
 import config as cfg
 from instructor.real_data.instructor import BasicInstructor
@@ -94,9 +96,12 @@ class LeakGANInstructor(BasicInstructor):
             else:
                 self.log.info('>>> Stop by adv_signal! Finishing adversarial training...')
                 break
-
-    def _test_2_layers(self):
+    def string2bins(self, bit_string, n_bins):
+            n_bits = int(math.log(n_bins, 2))
+            return [bit_string[i:i+n_bits] for i in range(0, len(bit_string), n_bits)]
+    def LSTM_layer_1(self, intermediate_file, bins_num):
         print('>>> Begin test...')
+        print('Begin with LSTM Layer')
         #First layer- LSTM layer
         epoch_start_time = time.time()
         seed = 1111
@@ -104,36 +109,29 @@ class LeakGANInstructor(BasicInstructor):
         torch.manual_seed(seed)
         if cfg.CUDA:
             torch.cuda.manual_seed(seed)
-        lstm_checkpoint = 'emnlp_news-model.pt'
-        with open(lstm_checkpoint, 'rb') as f:
-            lstm = torch.load(f)
+        with open("instructor/real_data/emnlp_news.pt", 'rb') as f:
+            model = torch.load(f)
         if cfg.CUDA:
-            lstm.cuda()
-        emnlp_data = '.dataset/emnlp_news'
+            model.cuda()
+        emnlp_data = 'dataset/emnlp_news/' 
         corpus = data.Corpus(emnlp_data)
         ntokens = len(corpus.dictionary)
-        hidden = lstm.init_hidden(1)
-        input = Variable(torch.rand(1, 1).mul(ntokens).long(), volatile=True)
+        hidden = model.init_hidden(1)
+        input = torch.randint(ntokens, (1, 1), dtype=torch.long)
 
         if cfg.CUDA:
             input.data = input.data.cuda()
         print("Finished Initializing LSTM Model")
-        
-        def string2bins(bit_string, n_bins):
-            n_bits = int(math.log(n_bins, 2))
-            return [bit_string[i:i+n_bits] for i in range(0, len(bit_string), n_bits)]
         #Step 1: Get secret data 
-        secret_file =  "instructor/real_data/secret_file.txt"
-        secret_file = open(secret_file, 'r')
+        secret_file = open("instructor/real_data/secret_file.txt", 'r')
         secret_data = secret_file.read()
         #Step 2: Compress string into binary string
         bit_string = ''.join(bin(ord(letter))[2:].zfill(8) for letter in secret_data)
         #print(bit_string)
-        bit_string = '1110111001010001110000111101111011111101110001100110101101100111'
+        bit_string = '111011100101000111000011110111101111110111000110011010110110'
         #In the first step we will use 256 bins (8 bit representation each) to convert so that we can convert 64 bits into 8 word 
-        bins_num = 256   
         #Step 3: Divide into bins
-        secret_text = [int(i,2) for i in string2bins(bit_string, bins_num)] #convert to bins
+        secret_text = [int(i,2) for i in self.string2bins(bit_string, bins_num)] #convert to bins
         #Step 4: Divide vocabulary into bins, zero words not in the bin
         if bins_num >= 2:
             tokens = list(range(ntokens)) #indecies of words
@@ -147,15 +145,16 @@ class LeakGANInstructor(BasicInstructor):
             for i in range(0, leftover):
                 bins[i].append(tokens[i+words_in_bin*bins_num])
             #save bins into key 1
-            key1 = 'lstm_key.txt'
-            np.savetxt(key1, bins)
+            key1 = "lstm_key.txt"
+            with open(key1, "wb") as fp:   #Pickling
+                pickle.dump(bins, fp)
             zero = [list(set(tokens) - set(bin_)) for bin_ in bins]
 
         print('Finished Initializing First LSTM Layer')
         print('time: {:5.2f}s'.format(time.time() - epoch_start_time))
         print('-' * 89)
 
-        intermediate_file = 'intermediate.txt'
+        intermediate_file = intermediate_file
         with open(intermediate_file, 'w') as outf:
             w = 0 
             i = 1
@@ -164,7 +163,7 @@ class LeakGANInstructor(BasicInstructor):
             print("bin sequence length", bin_sequence_length) #32 
             while i <= bin_sequence_length:
                 epoch_start_time = time.time()
-                output, hidden = lstm(input, hidden)
+                output, hidden = model(input, hidden)
                 
                 zero_index = zero[secret_text[:][i-1]]
                 zero_index = torch.LongTensor(zero_index) 
@@ -179,9 +178,90 @@ class LeakGANInstructor(BasicInstructor):
                 word = word.encode('ascii', 'ignore').decode('ascii')
                 outf.write(word +' ')
         print("Generated intermediate short steganographic text")
+        print("Intermediate text saved in following file: {}".format(intermediate_file))
+    def LSTM_layer_2(self, secret_file, intermediate_file, bins_num):
+        print('>>> Begin test...')
+        print('Begin with LSTM Layer')
+        #First layer- LSTM layer
+        epoch_start_time = time.time()
+        seed = 1111
+        #Reproducibility
+        torch.manual_seed(seed)
+        if cfg.CUDA:
+            torch.cuda.manual_seed(seed)
+        with open("instructor/real_data/emnlp_news.pt", 'rb') as f:
+            model = torch.load(f)
+        if cfg.CUDA:
+            model.cuda()
+        emnlp_data = 'dataset/emnlp_news/' 
+        corpus = data.Corpus(emnlp_data)
+        ntokens = len(corpus.dictionary)
+        hidden = model.init_hidden(1)
+        input = torch.randint(ntokens, (1, 1), dtype=torch.long)
 
-        #Second Layer = LeakGAN layer
-        print('>>> Begin Secon Layer...')
+        if cfg.CUDA:
+            input.data = input.data.cuda()
+        print("Finished Initializing LSTM Model")
+        #Step 1: Get secret data 
+        secret_file = open(secret_file, 'r')
+        secret_data = secret_file.read()
+        #Step 2: Compress string into binary string
+        bit_string = ''.join(bin(ord(letter))[2:].zfill(8) for letter in secret_data)
+        #print(bit_string)
+        #bit_string = '111011100101000111000011110111101111110111000110011010110110'
+        #In the first step we will use 256 bins (8 bit representation each) to convert so that we can convert 64 bits into 8 word 
+        #Step 3: Divide into bins
+        secret_text = [int(i,2) for i in self.string2bins(bit_string, bins_num)] #convert to bins
+        #Step 4: Divide vocabulary into bins, zero words not in the bin
+        if bins_num >= 2:
+            tokens = list(range(ntokens)) #indecies of words
+            random.shuffle(tokens) #randomize
+            
+            #Words in each bin
+            words_in_bin = int(ntokens / bins_num) 
+            bins = [tokens[i:i + words_in_bin] for i in range(0, ntokens, words_in_bin)] # words to keep in each bin 
+            #leftovers should be also included in the 
+            leftover = int(ntokens % bins_num)
+            for i in range(0, leftover):
+                bins[i].append(tokens[i+words_in_bin*bins_num])
+            #save bins into key 1
+            key1 = "lstm_key.txt"
+            with open(key1, "wb") as fp:   #Pickling
+                pickle.dump(bins, fp)
+            zero = [list(set(tokens) - set(bin_)) for bin_ in bins]
+
+        print('Finished Initializing First LSTM Layer')
+        print('time: {:5.2f}s'.format(time.time() - epoch_start_time))
+        print('-' * 89)
+
+        intermediate_file = intermediate_file
+        with open(intermediate_file, 'w') as outf:
+            w = 0 
+            i = 1
+            temperature = 1.5
+            bin_sequence_length = len(secret_text[:]) # 85
+            print("bin sequence length", bin_sequence_length) #32 
+            while i <= bin_sequence_length:
+                epoch_start_time = time.time()
+                output, hidden = model(input, hidden)
+                
+                zero_index = zero[secret_text[:][i-1]]
+                zero_index = torch.LongTensor(zero_index) 
+                word_weights = output.squeeze().data.div(temperature).exp().cpu() 
+                word_weights.index_fill_(0, zero_index, 0)
+                word_idx = torch.multinomial(word_weights, 1)[0]
+            
+                input.data.fill_(word_idx)
+                word = corpus.dictionary.idx2word[word_idx]
+                i += 1
+                w += 1
+                word = word.encode('ascii', 'ignore').decode('ascii')
+                outf.write(word +' ')
+        print("Generated intermediate short steganographic text")
+        print("Intermediate text saved in following file: {}".format(intermediate_file))
+    def leakGAN_layer(self):
+         #Second Layer = LeakGAN layer
+        print('>>> Begin Second Layer...')
         torch.nn.Module.dump_patches = True
         epoch_start_time = time.time() 
         # Set the random seed manually for reproducibility.
@@ -193,15 +273,13 @@ class LeakGANInstructor(BasicInstructor):
         self.gen.eval()
         corpus = self.index_word_dict
         #Step 1: Get Intermediate text
-        secret_file =  intermediate_file
+        secret_file =  'intermediate.txt'
         secret_file = open(secret_file, 'r')
         secret_data = secret_file.read()
-
         #Step 2: Compress string into binary string
         bit_string = ''.join(bin(ord(letter))[2:].zfill(8) for letter in secret_data)
-        #here you have to divide it into 64 bits equally 
-        bins_num = 4   
-        secret_text = [int(i,2) for i in string2bins(bit_string, bins_num)] #convert to bins 
+        bins_num = 2   
+        secret_text = [int(i,2) for i in self.string2bins(bit_string, bins_num)] #convert to bins 
         if bins_num >= 2:
             ntokens = len(corpus) 
             tokens = list(range(ntokens)) # * args.replication_factor
@@ -217,7 +295,8 @@ class LeakGANInstructor(BasicInstructor):
                 bins[i].append(tokens[i+words_in_bin*bins_num])
             #save bins into key 1
             key2 = 'leakGAN_key.txt'
-            np.savetxt(key2, bins)
+            with open(key2, "wb") as fp:   #Pickling
+                pickle.dump(bins, fp)
             zero = [list(set(tokens) - set(bin_)) for bin_ in bins]
         print('Finished Initializing Second LeakGAN Layer')
         print('time: {:5.2f}s'.format(time.time() - epoch_start_time))
@@ -291,9 +370,12 @@ class LeakGANInstructor(BasicInstructor):
         leak_out_array = leak_out_array[:, :seq_len, :]
         tokens = []
         write_tokens(out_file, tensor_to_tokens(samples, self.index_word_dict))
-        print("Samples: {}".format(samples))
-                
-            
+        print("Generated final steganographic text")
+        print("Final steganographic text saved in following file: {}".format(out_file))
+    def _test_2_layers(self):
+       self.LSTM_layer_1("intermediate.txt", 4096)
+       self.LSTM_layer_2("intermediate.txt", "final_1.txt", 4)
+       self.leakGAN_layer()
             
     def _test(self):
         print('>>> Begin test...')
