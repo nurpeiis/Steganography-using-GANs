@@ -1,7 +1,8 @@
 import os
 import torch
 import codecs
-
+import pickle
+import time
 class Dictionary(object):
     def __init__(self):
         self.word2idx = {}
