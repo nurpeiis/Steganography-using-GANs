@@ -30,12 +30,21 @@ for id1 in ids:
 def text_from_bits(bits, encoding='utf-8', errors='surrogatepass'):
     n = int(bits, 2)
     return n.to_bytes((n.bit_length() + 7) // 8, 'big').decode(encoding, errors) or '\0'
+def from_final_to_intermediate(bits, bins):
+    text = [int('0b'+ bits[i : i + bins], 2) for i in range(0, len(bits), bins)]
+    return text
 binary = ''
 for bin1 in bins:
     b = '{0:02b}'.format(bin1)
     binary += b
-binary = '0b' + binary
-intermediate = text_from_bits(binary)
+#divide into 13 bits 
+text = from_final_to_intermediate(binary, 13)
+with open("idx2word_1.txt", 'rb') as f:
+    idx2word1 = pickle.load(f)
+for i in range(0, len(text)):
+    text[i] = idx2word1[text[i]]
+print("Text: ", text)
+
 def decode(file, key_file, word2idx_file):
     lstm_key2_file = key_file
     word2idx_2 = word2idx_file
