@@ -105,6 +105,7 @@ class LeakGANInstructor(BasicInstructor):
         #First layer- LSTM layer
         epoch_start_time = time.time()
         seed = 1111
+        data_root = './decode/'
         #Reproducibility
         torch.manual_seed(seed)
         if cfg.CUDA:
@@ -116,8 +117,8 @@ class LeakGANInstructor(BasicInstructor):
         emnlp_data = 'dataset/emnlp_news/' 
         corpus = dataa.Corpus(emnlp_data)
         ntokens = len(corpus.dictionary)
-        idx2word_file = "idx2word_1.txt" 
-        word2idx_file = "word2idx_1.txt"
+        idx2word_file = data_root + "idx2word_1.txt" 
+        word2idx_file = data_root + "word2idx_1.txt"
         with open(idx2word_file, "wb") as fp:   #Pickling
                 pickle.dump(corpus.dictionary.idx2word, fp)
         with open(word2idx_file, "wb") as fp:   #Pickling
@@ -154,7 +155,7 @@ class LeakGANInstructor(BasicInstructor):
                 bins[i].append(tokens[i+words_in_bin*bins_num])
             print("Len of bins in 1st layer: {}".format(len(bins)))
             #save bins into key 1
-            key1 = "lstm_key1.txt"
+            key1 = data_root + "lstm_key1.txt"
             with open(key1, "wb") as fp:   #Pickling
                 pickle.dump(bins, fp)
             zero = [list(set(tokens) - set(bin_)) for bin_ in bins]
@@ -163,7 +164,7 @@ class LeakGANInstructor(BasicInstructor):
         print('time: {:5.2f}s'.format(time.time() - epoch_start_time))
         print('-' * 89)
 
-        intermediate_file = intermediate_file
+        intermediate_file = data_root + intermediate_file
         with open(intermediate_file, 'w') as outf:
             w = 0 
             i = 1
@@ -191,6 +192,7 @@ class LeakGANInstructor(BasicInstructor):
     def LSTM_layer_2(self, secret_file, intermediate_file, bins_num):
         print('Final LSTM Layer')
         #First layer- LSTM layer
+        data_root = './decode/'
         epoch_start_time = time.time()
         seed = 1111
         #Reproducibility
@@ -204,8 +206,8 @@ class LeakGANInstructor(BasicInstructor):
         emnlp_data = 'dataset/emnlp_news/' 
         corpus = dataa.Corpus(emnlp_data)
         #save dictionary
-        idx2word_file = "idx2word_2.txt" 
-        word2idx_file = "word2idx_2.txt"
+        idx2word_file = data_root + "idx2word_2.txt" 
+        word2idx_file = data_root + "word2idx_2.txt"
         with open(idx2word_file, "wb") as fp:   #Pickling
                 pickle.dump(corpus.dictionary.idx2word, fp)
         with open(word2idx_file, "wb") as fp:   #Pickling
@@ -218,7 +220,7 @@ class LeakGANInstructor(BasicInstructor):
             input.data = input.data.cuda()
         print("Finished Initializing LSTM Model")
         #Step 1: Get secret data 
-        secret_file = open(secret_file, 'r')
+        secret_file = open(data_root + secret_file, 'r')
         secret_data = secret_file.read().split()
         #Step 2: Compress string into binary string
         bit_string = ''
@@ -252,7 +254,7 @@ class LeakGANInstructor(BasicInstructor):
                 bins[i].append(tokens[i+words_in_bin*bins_num])
             
             #save bins into key 1
-            key1 = "lstm_key2.txt"
+            key1 = data_root + "lstm_key2.txt"
             with open(key1, "wb") as fp:   #Pickling
                 pickle.dump(bins, fp)
             zero = [list(set(tokens) - set(bin_)) for bin_ in bins]
@@ -261,7 +263,7 @@ class LeakGANInstructor(BasicInstructor):
         print('time: {:5.2f}s'.format(time.time() - epoch_start_time))
         print('-' * 89)
 
-        intermediate_file = intermediate_file
+        intermediate_file = data_root + intermediate_file
         with open(intermediate_file, 'w') as outf:
             w = 0 
             i = 1
@@ -285,10 +287,11 @@ class LeakGANInstructor(BasicInstructor):
                 word = word.encode('ascii', 'ignore').decode('ascii')
                 outf.write(word +' ')
         print("Generated final steganographic text")
-        print("Final text saved in following file: {}".format(intermediate_file))
+        print("Final text saved in following file: {}".format(str(data_root + intermediate_file)))
     def leakGAN_layer(self):
          #Second Layer = LeakGAN layer
         print('>>> Begin Second Layer...')
+        data_root = './decode/'
         torch.nn.Module.dump_patches = True
         epoch_start_time = time.time() 
         # Set the random seed manually for reproducibility.
@@ -300,7 +303,7 @@ class LeakGANInstructor(BasicInstructor):
         self.gen.eval()
         
         #Step 1: Get Intermediate text
-        secret_file =  'intermediate.txt'
+        secret_file =  data_root + 'intermediate.txt'
         emnlp_data = 'dataset/emnlp_news/' 
         corpus = dataa.Corpus(emnlp_data)
         secret_file = open(secret_file, 'r')
@@ -329,14 +332,14 @@ class LeakGANInstructor(BasicInstructor):
             for i in range(0, leftover):
                 bins[i].append(tokens[i+words_in_bin*bins_num])
             #save bins into key 1
-            key2 = 'leakGAN_key.txt'
+            key2 = data_root + 'leakGAN_key.txt'
             with open(key2, "wb") as fp:   #Pickling
                 pickle.dump(bins, fp)
             zero = [list(set(tokens) - set(bin_)) for bin_ in bins]
         print('Finished Initializing Second LeakGAN Layer')
         print('time: {:5.2f}s'.format(time.time() - epoch_start_time))
         print('-' * 89)
-        out_file = 'final_stego.txt'
+        out_file = data_root + 'final_leakgan.txt'
         w = 0 
         i = 1
         bin_sequence_length = len(secret_text[:])
@@ -408,8 +411,8 @@ class LeakGANInstructor(BasicInstructor):
         print("Generated final steganographic text")
         print("Final steganographic text saved in following file: {}".format(out_file))
     def _test_2_layers(self):
-       #self.LSTM_layer_1("intermediate.txt", 4096)
-       #self.LSTM_layer_2("intermediate.txt", "final_1.txt", 4)
+       self.LSTM_layer_1("intermediate.txt", 4096)
+       self.LSTM_layer_2("intermediate.txt", "final_1.txt", 4)
        self.leakGAN_layer()
             
     def _test(self):

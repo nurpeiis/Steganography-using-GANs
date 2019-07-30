@@ -29,6 +29,22 @@ To generate stego text using EMNLP_NEWS dataset & and double layer of encoding r
 
 `python3 generate.py 2`
 
+## Evaluation
+
+### BLEU Score
+In order to calculate bleu score of LSTM-LeakGAN Double layer of encoding run following command:
+
+`python3 bleu_score.py --leakGAN`
+
+In order to calculate bleu score of LSTM-LSTM Double layer of encoding run following command:
+
+`python3 bleu_score.py --test_data='./decode/final_lstm.txt'`
+
+The program will calculate up to BLEU 5 score as a default. In order to change up to which BLEU score you would like to calculate enter following command:
+
+`python3 bleu_score.py --gram=3`
+
+This will calculate up to BLEU 3 score
 
 ## Reference
 You can find more details on how LeakGAN model works in following paper:
