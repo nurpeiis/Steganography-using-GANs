@@ -9,6 +9,7 @@ def program_config(parser):
     # Program
     parser.add_argument('--if_test', default=cfg.if_test, type=int)
     parser.add_argument('--if_2layers', default=cfg.if_2layers, type=int)
+    parser.add_argument('--leakGAN', default=cfg.leakGAN, type=int)
     parser.add_argument('--run_model', default=cfg.run_model, type=str)
     parser.add_argument('--dataset', default=cfg.dataset, type=str)
     parser.add_argument('--model_type', default=cfg.model_type, type=str)

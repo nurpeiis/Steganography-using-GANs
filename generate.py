@@ -32,6 +32,7 @@ executable = 'python3'
 # =====Program=====
 if_test = int(True)
 if_2layers = int(True)
+leakGAN = int(False)
 run_model = 'leakgan'
 CUDA = int(True)
 if_real_data = [int(False), int(True), int(True), int(True), int(True), int(True), int(True)]

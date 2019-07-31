@@ -15,6 +15,7 @@ import torch
 # =====Program=====
 if_test = False
 if_2layers = True
+leakGAN = True
 CUDA = True
 if_save = True
 data_shuffle = False  # False
@@ -130,10 +131,11 @@ def init_param(opt):
         gen_hidden_dim, goal_size, step_size, mem_slots, num_heads, head_size, d_step, d_epoch, \
         ADV_d_step, ADV_d_epoch, dis_embed_dim, dis_hidden_dim, num_rep, log_filename, save_root, \
         signal_file, tips, save_samples_root, save_model_root, if_real_data, pretrained_gen_path, \
-        pretrained_dis_path, pretrain_root, if_test, if_2layers, use_truncated_normal, dataset
+        pretrained_dis_path, pretrain_root, if_test, if_2layers, leakGAN, use_truncated_normal, dataset
 
     if_test = True if opt.if_test == 1 else False
     if_2layers = True if opt.if_2layers == 1 else False
+    leakGAN = True if opt.leakGAN == 1 else False
     run_model = opt.run_model
     dataset = opt.dataset
     model_type = opt.model_type
