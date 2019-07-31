@@ -31,6 +31,12 @@ To generate stego text using EMNLP_NEWS dataset & and double layer of encoding r
 
 The default double layer of encoding uses LSTM - LSTM double layer. In order to change it into LSTM - LeakGAN double layer, change the command leakGAN option in `generate.py` to `int(True)`
 
+If you want to test the system with pretrained models, the models are saved in `instructor/real_data` directory
+
+`emnlp_news.pt` is the LSTM model trained on EMNLP news dataset
+
+`gen_ADV_00028.pt` is the LeakGAN model trained on EMNLP news dataset
+
 ## Evaluation
 
 ### BLEU Score
