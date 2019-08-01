@@ -13,9 +13,9 @@ generating steganographic text, as a test case of sequential data.
 
 To start training LeakGAN model on EMNLP data run following commands:
 
-`cd run`
+`mkdir save pretrain savefig` to save the progress of training
 
-`python3 run-leakgan.py 3`
+`python3 train_leakgan.py 2`
 
 To start the training LSTM model on EMNLP data run following commands:
 
