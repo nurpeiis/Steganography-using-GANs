@@ -20,7 +20,7 @@ from utils.data_loader import GenDataIter, DisDataIter
 from utils.text_process import tensor_to_tokens, write_tokens
 
 from LSTM import data as dataa
-
+from LSTM import model as LSTM
 class LeakGANInstructor(BasicInstructor):
     def __init__(self, opt):
         super(LeakGANInstructor, self).__init__(opt)
@@ -29,6 +29,10 @@ class LeakGANInstructor(BasicInstructor):
         self.gen = LeakGAN_G(cfg.gen_embed_dim, cfg.gen_hidden_dim, cfg.vocab_size, cfg.max_seq_len,
                              cfg.padding_idx, cfg.goal_size, cfg.step_size, cfg.CUDA)
         self.dis = LeakGAN_D(cfg.dis_embed_dim, cfg.vocab_size, cfg.padding_idx, gpu=cfg.CUDA)
+        
+        #LSTM
+        self.corpus = dataa.Corpus('dataset/emnlp_news/')
+        self.lstm = LSTM.RNNModel('LSTM', len(self.corpus.dictionary), 200, 600, 3, 0.2, False)
         if (cfg.CUDA):
             self.dis.cuda()
             self.gen.cuda()
@@ -111,9 +115,9 @@ class LeakGANInstructor(BasicInstructor):
         if cfg.CUDA:
             torch.cuda.manual_seed(seed)
         with open("leakGAN_instructor/real_data/emnlp_news.pt", 'rb') as f:
-            model = torch.load(f)
+            self.lstm = torch.load(f)
         if cfg.CUDA:
-            model.cuda()
+            self.lstm.cuda()
         emnlp_data = 'dataset/emnlp_news/' 
         corpus = dataa.Corpus(emnlp_data)
         ntokens = len(corpus.dictionary)
@@ -123,7 +127,7 @@ class LeakGANInstructor(BasicInstructor):
                 pickle.dump(corpus.dictionary.idx2word, fp)
         with open(word2idx_file, "wb") as fp:   #Pickling
                 pickle.dump(corpus.dictionary.word2idx, fp)
-        hidden = model.init_hidden(1)
+        hidden = self.lstm.init_hidden(1)
         input = torch.randint(ntokens, (1, 1), dtype=torch.long)
 
         if cfg.CUDA:
@@ -173,7 +177,7 @@ class LeakGANInstructor(BasicInstructor):
             print("bin sequence length", bin_sequence_length) #32 
             while i <= bin_sequence_length:
                 epoch_start_time = time.time()
-                output, hidden = model(input, hidden)
+                output, hidden = self.lstm(input, hidden)
                 
                 zero_index = zero[secret_text[:][i-1]]
                 zero_index = torch.LongTensor(zero_index) 
@@ -200,9 +204,9 @@ class LeakGANInstructor(BasicInstructor):
         if cfg.CUDA:
             torch.cuda.manual_seed(seed)
         with open("leakGAN_instructor/real_data/emnlp_news.pt", 'rb') as f:
-            model = torch.load(f)
+            self.lstm = torch.load(f)
         if cfg.CUDA:
-            model.cuda()
+            self.lstm.cuda()
         emnlp_data = 'dataset/emnlp_news/' 
         corpus = dataa.Corpus(emnlp_data)
         #save dictionary
@@ -213,7 +217,7 @@ class LeakGANInstructor(BasicInstructor):
         with open(word2idx_file, "wb") as fp:   #Pickling
                 pickle.dump(corpus.dictionary.word2idx, fp)
         ntokens = len(corpus.dictionary)
-        hidden = model.init_hidden(1)
+        hidden = self.lstm.init_hidden(1)
         input = torch.randint(ntokens, (1, 1), dtype=torch.long)
 
         if cfg.CUDA:
@@ -269,7 +273,7 @@ class LeakGANInstructor(BasicInstructor):
             print("bin sequence length", bin_sequence_length) #32 
             while i <= bin_sequence_length:
                 epoch_start_time = time.time()
-                output, hidden = model(input, hidden)
+                output, hidden = self.lstm(input, hidden)
                 
                 zero_index = zero[secret_text[:][i-1]]
                 zero_index = torch.LongTensor(zero_index) 
