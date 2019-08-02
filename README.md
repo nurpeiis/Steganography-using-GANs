@@ -1,6 +1,11 @@
 # Steganography for sequential data
+
 The main aim of this project is to test double layer of encoding and LeakGAN and RNN models for sequential steganographic system. In particular we have concentrated on 
-generating steganographic text, as a test case of sequential data. 
+generating steganographic text, as a test case of sequential data. This project can be used to tackle censorship and targeted ads issues when exchanging textual messages through the messengers and email services.
+
+The figure below provides high level description of the system, assuming that the messenger services use end-to-end encryption (E2E).
+
+![Stego-E2E System](diagrams/stego_e2e.png)
 
 ## How Double Layer of Encoding Works
 
