@@ -9,6 +9,10 @@ The figure below provides high level description of the system, assuming that th
 
 ## How Double Layer of Encoding Works
 
+The diagram below depicts how double layer of encoding works on a high level
+
+![Double-Layer](diagrams/double_layer.jpg)
+
 ## Requirements
 * **PyTorch r1.1.0**
 * Python 3.5+
