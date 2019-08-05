@@ -5,13 +5,18 @@ generating steganographic text, as a test case of sequential data. This project 
 
 The figure below provides high level description of the system, assuming that the messenger services use end-to-end encryption (E2E).
 
-![Stego-E2E System](diagrams/stego_e2e.png)
+<p align="center">
+  <img height="300" src="diagrams/stego_e2e.png">
+</p>
+
 
 ## How Double Layer of Encoding Works
 
 The diagram below depicts how double layer of encoding works on a high level
 
-![Double-Layer](diagrams/double_layer.jpg)
+<p align="center">
+  <img height="300" src="diagrams/double_layer.jpg">
+</p>
 
 ## Requirements
 * **PyTorch r1.1.0**
