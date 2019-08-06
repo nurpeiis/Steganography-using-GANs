@@ -18,6 +18,11 @@ The diagram below depicts how double layer of encoding works on a high level
   <img height="300" src="diagrams/double_layer.jpg">
 </p>
 
+## Why steganography using generative models?
+1. Encryption system encodes information in a special way so that only authorized parties can decode it while unauthorized ones cannot. It ensures the security of information by making the message indecipherable. Privacy system is mainly to restrict access to information so that only authorized users have access to important information. Although these two systems ensure information security, they also EXPOSE the existence and importance of information, making it more vulnerable to get attacks, such as interception and cracking
+2. Generating natural cover text without modifying known plaintext will resolve cover attack issue
+3. Inacurrate data collection about you, since now the servers are collecting not the original message, but the cover message
+
 ## Requirements
 * **PyTorch r1.1.0**
 * Python 3.5+
