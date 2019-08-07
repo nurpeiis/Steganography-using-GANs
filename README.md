@@ -55,10 +55,19 @@ If you want to test the system with pretrained models, the models are saved in `
 `emnlp_news.pt` is the LSTM model trained on EMNLP news dataset
 
 `gen_ADV_00028.pt` is the LeakGAN model trained on EMNLP news dataset
+## Decode
 
-## Evaluation
+In order to decode run following command:
 
-### BLEU Score
+`cd decode`
+
+`python3 decoder.py`
+
+This way you will evaluate lstm-lstm double layer. In order to decode lstm-leakGAN double layer run following command after getting into `decode` folder:
+
+`python3 decoder.py --leakGAN`
+
+## Evaluation with BLEU Score
 In order to calculate bleu score of LSTM-LeakGAN Double layer of encoding run following command:
 
 `python3 bleu_score.py --leakGAN`
