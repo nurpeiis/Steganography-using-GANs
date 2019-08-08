@@ -18,6 +18,8 @@ The diagram below depicts how double layer of encoding works on a high level
   <img height="300" src="diagrams/double_layer.jpg">
 </p>
 
+The poster for the project can be found in the `diagrams` folder
+
 ## Why steganography using generative models?
 1. Encryption system encodes information in a special way so that only authorized parties can decode it while unauthorized ones cannot. It ensures the security of information by making the message indecipherable. Privacy system is mainly to restrict access to information so that only authorized users have access to important information. Although these two systems ensure information security, they also EXPOSE the existence and importance of information, making it more vulnerable to get attacks, such as interception and cracking
 2. Generating natural cover text without modifying known plaintext will resolve cover attack issue
