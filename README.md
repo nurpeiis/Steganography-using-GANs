@@ -1,4 +1,4 @@
-# Steganography for sequential data
+# ConcealGAN: Steganography for sequential data
 
 The main aim of this project is to test double layer of encoding and LeakGAN and RNN models for sequential steganographic system. In particular we have concentrated on 
 generating steganographic text, as a test case of sequential data. This project can be used to tackle censorship and targeted ads issues when exchanging textual messages through the messengers and email services.
